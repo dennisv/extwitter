@@ -141,6 +141,10 @@ defmodule ExTwitter.API.Streaming do
 
       {:http, {request_id, :stream, part}} ->
         cond do
+          is_empty_message(part) ->
+            send processor, :keepalive
+            process_stream(processor, request_id, configs, acc)
+
           is_end_of_message(part) ->
             # There is a chance of multiple tweets here.
             Enum.reverse([part | acc])
@@ -170,6 +174,7 @@ defmodule ExTwitter.API.Streaming do
     end
   end
 
+  def is_empty_message(part), do: part == @crlf
   def is_end_of_message(part), do: part |> String.ends_with?(@crlf)
 
   defp parse_message_type(%{friends: friends}, _) do
